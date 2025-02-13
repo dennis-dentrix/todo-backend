@@ -72,6 +72,12 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: 'success' });
 };
 
+exports.checkAuthStatus = catchAsync(async(req, res, next) => {
+  res.status(200).json({
+    status: 'success',
+    user: req.user,
+  });
+})
 
 exports.protect = catchAsync(async (req, res, next) => {
   // GET THE TOKEN
