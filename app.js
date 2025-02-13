@@ -40,6 +40,6 @@ app.use("*", (req, res, next) => {
   );
 });
 
-app.use(globalErrorHandler)
+// app.use(globalErrorHandler)
 
 module.exports = app;
