@@ -13,15 +13,27 @@ const signToken = (id) => {
   });
 };
 
-const createTokenAndSend = (user, statusCode, res) => {
+
+const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
 
+  res.cookie('jwt', token, {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https'
+  });
+
+  // Remove password from output
+  user.password = undefined;
+
   res.status(statusCode).json({
-    status: "success",
+    status: 'success',
     token,
     data: {
-      user,
-    },
+      user
+    }
   });
 };
 
@@ -33,7 +45,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm,
   });
   // console.log(req.body)
-  createTokenAndSend(newUser, 200, res);
+  createSendToken(newUser, 200,req, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -49,8 +61,17 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect email or password. Try again.", 401));
   }
 
-  createTokenAndSend(user, 200, res);
+  createSendToken(user, 200, req, res);
 });
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true
+  });
+  res.status(200).json({ status: 'success' });
+};
+
 
 exports.protect = catchAsync(async (req, res, next) => {
   // GET THE TOKEN
@@ -162,5 +183,5 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   // LOG USER IN, SEND JWT
-  createTokenAndSend(user, 200, res);
+  createSendToken(user, 200, req, res);
 });

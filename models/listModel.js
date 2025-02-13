@@ -31,7 +31,7 @@ listSchema.pre("save", async function (next) {
     });
 
     if (existingList) {
-      console.log("Document Exists");
+      // console.log("Document Exists");
 
       const err = new Error("A list with this title already exists.");
       return next(err);
