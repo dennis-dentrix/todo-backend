@@ -6,20 +6,27 @@ const listSchema = new mongoose.Schema({
     required: [true, "A list must have a title"],
     unique: true,
   },
+  category: {
+    type: String,
+    required: [true, "A list must have a category"],
+  },
   description: {
     type: String,
     required: [true, "A list must have a description"],
   },
   createdAt: {
     type: Date,
-    default: Date.now, // Fix default value
+    default: new Date().toLocaleDateString(), // Fix default value
+  },
+  dueDate: { type: Date,
+    default: Date.now(),
   },
   remark: {
     type: String,
   },
   status: {
     type: String,
-    enum: ["pending", "completed"],
+    enum: ["incomplete", "completed"],
     default: "pending",
   },
 });
