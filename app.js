@@ -32,9 +32,7 @@ app.use(xss());
 
 app.use(compression())
 
-app.use("/api/v1/", listRouter);
-
-// app.use("/api/v1/list", listRouter);
+app.use("/api/v1/list", listRouter);
 app.use("/api/v1/users", userRouter);
 app.use("*", (req, res, next) => {
   return next(
