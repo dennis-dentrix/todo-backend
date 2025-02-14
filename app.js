@@ -4,25 +4,41 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const helmet = require("helmet");
 const compression = require("compression");
-const cors = require("cors")
+const cors = require("cors");
 
-const globalErrorHandler = require("./controllers/errorController")
+const globalErrorHandler = require("./controllers/errorController");
 const listRouter = require("./routes/listRoutes");
 const userRouter = require("./routes/userRoute");
 const AppError = require("./utils/appError");
 
 const app = express();
 
-app.use(cors());
-app.options("*", cors());
+// Define allowed origins based on environment
+const allowedOrigins = [
+  "http://localhost:5173", // Development origin
+  // "https://your-production-domain.com", 
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // Allow cookies, authorization headers, etc.
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(helmet());
 
-
 // RATE LIMITING(requests per set time limit)
 const rateLimiter = rateLimit({
-  windosMs: 20 * 60 * 1000, // every 20 minutes
-  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+  windowMs: 20 * 60 * 1000, // every 20 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
   message: "Too many requests. Please try again later",
 });
 
@@ -35,16 +51,17 @@ app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 app.use(xss());
 
-app.use(compression())
+app.use(compression());
 
 app.use("/api/v1/list", listRouter);
 app.use("/api/v1/users", userRouter);
+
 app.use("*", (req, res, next) => {
   return next(
     new AppError(`The requested url ${req.originalUrl} can't be found`)
   );
 });
 
-app.use(globalErrorHandler)
+app.use(globalErrorHandler);
 
 module.exports = app;
