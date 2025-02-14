@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
         return el === this.password;
       },
       message: "Passwords do not match",
+      min: 8
     },
   },
   passwordConfirm: {
