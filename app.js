@@ -3,7 +3,8 @@ const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const helmet = require("helmet");
-const compression = require("compression")
+const compression = require("compression");
+const cors = require("cors")
 
 const globalErrorHandler = require("./controllers/errorController")
 const listRouter = require("./routes/listRoutes");
@@ -12,7 +13,11 @@ const AppError = require("./utils/appError");
 
 const app = express();
 
-app.use(helmet())
+app.use(cors());
+app.options("*", cors());
+
+app.use(helmet());
+
 
 // RATE LIMITING(requests per set time limit)
 const rateLimiter = rateLimit({
