@@ -3,7 +3,7 @@ import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
 async function sendEmail  (options) {
   try {
-    console.log('sendEmail called with options:', options);
+    // console.log('sendEmail called with options:', options);
 
     if (!process.env.MAILERSEND_API_KEY) {
       throw new Error('MAILERSEND_API_KEY is not defined in environment variables');
@@ -36,7 +36,7 @@ async function sendEmail  (options) {
 
     // Send email
     const response = await mailerSend.email.send(emailParams);
-    console.log('Email sent successfully:', response);
+    // console.log('Email sent successfully:', response);
     return response;
 
   } catch (error) {

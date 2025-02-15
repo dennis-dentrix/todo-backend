@@ -179,7 +179,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   `;
 
   try {
-    console.log(typeof sendEmail)
+    // console.log(typeof sendEmail)
     await sendEmail({
       email: user.email,
       name: user.name,
