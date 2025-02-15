@@ -18,9 +18,7 @@ const listSchema = new mongoose.Schema({
     type: Date,
     default: new Date().toLocaleDateString(), // Fix default value
   },
-  dueDate: { type: Date,
-    default: Date.now(),
-  },
+  dueDate: { type: Date, default: Date.now },
   remark: {
     type: String,
   },
