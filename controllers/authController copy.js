@@ -5,8 +5,7 @@ const jwt = require("jsonwebtoken");
 const AppError = require("../utils/appError");
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
-const { default: sendEmail } = require("../utils/emails");
-// const sendEmail = require("../utils/emails");
+const sendEmail = require("../utils/emails");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -148,59 +147,57 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-  // 1. Check if the user exists
-  const user = await User.findOne({ email: req.body.email });
+  // CHECK IF THE USER EXISTS
+  const user = await User.findOne({
+    email: req.body.email,
+  });
+
 
   if (!user) {
-    return next(new AppError("There is no user with that email address.", 404));
+    return next(new AppError("Email not valid for any user. Try again!"), 404);
   }
 
-  // 2. Generate a random reset token
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  // Hash the token and set it on the user document
-  user.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-
-  // Set token expiration time (e.g., 10 minutes from now)
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-
-  // Save the user document without validation
+  // GENERATE RANDOM RESET TOKEN
+  const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // 3. Send the reset token to user's email
-  const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/users/resetPassword/${resetToken}`;
+  // SEND RESET TOKEN TO USER'S EMAIL
+  const resetUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/users/resetPassword/${resetToken}`;
 
   const message = `
-    <p>You requested a password reset. Click the link below to reset your password:</p>
+    <p>Forgot your password? Submit a PATCH request with your new password and passwordConfirm to:</p>
     <p><a href="${resetUrl}">${resetUrl}</a></p>
-    <p>If you didn't request this, please ignore this email.</p>
+    <p>If you didn't forget your password, please ignore this email.</p>
   `;
 
   try {
-    console.log(typeof sendEmail)
-    await sendEmail({
+    return await sendEmail({
       email: user.email,
       name: user.name,
-      subject: "Your Password Reset Token (Valid for 10 Minutes)",
+      subject: "Your password reset token (valid for 10 mins)",
       message,
     });
 
     res.status(200).json({
-      status: "success",
-      message: "Token sent to email!",
+      status: "Success",
+      message: "Token sent to email.",
     });
-  } catch (err) {
-    // Cleanup if email fails to send
+  } catch (error) {
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    return next(new AppError("There was an error sending the email. Try again later!", 500));
+    return next(
+      new AppError(
+        "There was an error sending the email. Try again later!",
+        500
+      )
+    );
   }
 });
-
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // GET USER BASED ON THE TOKEN
