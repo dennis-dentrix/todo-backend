@@ -25,7 +25,7 @@ const listSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["incomplete", "completed"],
-    default: "pending",
+    default: "incomplete",
   },
 });
 
