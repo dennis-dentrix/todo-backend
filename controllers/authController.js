@@ -92,7 +92,11 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
 
 
 exports.logout = (req, res) => {
-  res.clearCookie('jwt'); // Clear the JWT cookie
+  res.clearCookie('jwt', {
+    httpOnly: true,
+    sameSite: 'None',
+    secure: true
+  }); // Clear the JWT cookie
   res.status(200).json({ status: 'success', message: 'Logged out successfully' });
 };
 
