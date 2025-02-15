@@ -17,6 +17,7 @@ const app = express();
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
+  "http://192.168.100.11:5173/"
   // "https://your-production-domain.com", 
 ];
 
