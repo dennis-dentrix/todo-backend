@@ -14,6 +14,8 @@ const AppError = require("./utils/appError");
 
 const app = express();
 
+app.set('trust proxy', true);
+
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
