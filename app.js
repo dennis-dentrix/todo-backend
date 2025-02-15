@@ -5,6 +5,7 @@ const xss = require("xss-clean");
 const helmet = require("helmet");
 const compression = require("compression");
 const cors = require("cors");
+const cookieParser = require("cookie-parser")
 
 const globalErrorHandler = require("./controllers/errorController");
 const listRouter = require("./routes/listRoutes");
@@ -32,6 +33,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+
+app.use(cookieParser())
 
 app.use(helmet());
 

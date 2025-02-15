@@ -64,6 +64,31 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, req, res);
 });
 
+// Get Current User
+exports.getCurrentUser = catchAsync(async (req, res, next) => {
+  if (!req.cookies.jwt) {
+    return next(new AppError('You are not logged in!', 401));
+  }
+
+  // Verify token
+  const decoded = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
+  
+  // Check if user still exists
+  const currentUser = await User.findById(decoded.id);
+  
+  if (!currentUser) {
+    return next(new AppError('The user belonging to this token does no longer exist.', 401));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: currentUser,
+    },
+  });
+});
+
+
 exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {
     expires: new Date(Date.now() + 10 * 1000),

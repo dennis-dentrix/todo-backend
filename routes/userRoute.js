@@ -15,5 +15,5 @@ router.post("/forgotPassword", authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 
 router.route("/").get(userController.getAllUsers);
-router.get("/current", userController.getCurrentUser)
+router.get("/current", authController.getCurrentUser)
 module.exports = router;
