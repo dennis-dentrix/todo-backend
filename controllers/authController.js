@@ -148,29 +148,35 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-  // 1. Check if the user exists
-  const user = await User.findOne({ email: req.body.email });
+  // 1. Check if the email is valid
+  const { email } = req.body;
+  if (!email) {
+    return next(new AppError("Please provide your email", 400));
+  }
+
+  // 2. Check if the user exists
+  const user = await User.findOne({ email });
 
   if (!user) {
     return next(new AppError("There is no user with that email address.", 404));
   }
 
-  // 2. Generate a random reset token
+  // 3. Generate a random reset token
   const resetToken = crypto.randomBytes(32).toString("hex");
-
-  // Hash the token and set it on the user document
-  user.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
   // Set token expiration time (e.g., 10 minutes from now)
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  user.passwordResetToken = hashedToken;
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
   // Save the user document without validation
   await user.save({ validateBeforeSave: false });
 
-  // 3. Send the reset token to user's email
-  const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/users/resetPassword/${resetToken}`;
+  
+  // const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const frontendBaseURL = process.env.FRONTEND_BASE_URL || `${req.protocol}://${req.get("host")}`;
+  const resetUrl = `${frontendBaseURL}/reset-password/${resetToken}`;
 
   const message = `
     <p>You requested a password reset. Click the link below to reset your password:</p>
@@ -179,7 +185,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   `;
 
   try {
-    // console.log(typeof sendEmail)
     await sendEmail({
       email: user.email,
       name: user.name,
@@ -189,7 +194,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: "success",
-      message: "Token sent to email!",
+      message: "A reset token has been sent to your email address. Please check your inbox.",
     });
   } catch (err) {
     // Cleanup if email fails to send
@@ -197,7 +202,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    return next(new AppError("There was an error sending the email. Try again later!", 500));
+    console.error("Error sending password reset email:", err); // Log the error
+    return next(new AppError("There was an error sending the email. Please try again later!", 500));
   }
 });
 
