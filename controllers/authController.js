@@ -176,7 +176,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   
   // const baseUrl = `${req.protocol}://${req.get("host")}`;
   const frontendBaseURL = process.env.FRONTEND_BASE_URL || `${req.protocol}://${req.get("host")}`;
-  const resetUrl = `${frontendBaseURL}/reset-password/${resetToken}`;
+  const resetUrl = `${frontendBaseURL}/resetpassword/${resetToken}`;
 
   const message = `
     <p>You requested a password reset. Click the link below to reset your password:</p>
