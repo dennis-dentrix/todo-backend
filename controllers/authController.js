@@ -168,7 +168,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // Set token expiration time (e.g., 10 minutes from now)
   user.passwordResetToken = hashedToken;
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  user.passwordResetExpires = Date.now() + 24 * 60 * 1000; // 10 minutes
 
   // Save the user document without validation
   await user.save({ validateBeforeSave: false });
@@ -188,7 +188,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await sendEmail({
       email: user.email,
       name: user.name,
-      subject: "Your Password Reset Token (Valid for 10 Minutes)",
+      subject: "Your Password Reset Token (Valid for 24hours)",
       message,
     });
 
