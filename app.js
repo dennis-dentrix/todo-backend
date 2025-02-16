@@ -20,7 +20,7 @@ app.set('trust proxy', true);
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
   "http://192.168.100.11:5173", // Local network origin
-  "https://todolist-web-3j2j.onrender.com/", // Production origin
+  "https://todolist-web-3j2j.onrender.com", // Production origin
 ];
 
 const corsOptions = {
