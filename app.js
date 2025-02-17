@@ -19,7 +19,7 @@ app.set('trust proxy', true);
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
-  "https://todo-frontend-react-app.onrender.com",
+  "https://todolist-web-3j2j.onrender.com",
   // "https://todolist-web-3j2j.onrender.com"
 ];
 
