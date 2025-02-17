@@ -6,6 +6,7 @@ const AppError = require("../utils/appError");
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const { default: sendEmail } = require("../utils/emails");
+const cookieParser = require("cookie-parser");
 // const sendEmail = require("../utils/emails");
 
 const signToken = (id) => {
@@ -93,12 +94,11 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
 
 
 exports.logout = (req, res) => {
-  res.clearCookie('jwt', {
-    httpOnly: true,
-    sameSite: 'None',
-    secure: true
-  }); // Clear the JWT cookie
-  res.status(200).json({ status: 'success', message: 'Logged out successfully' });
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() - 10 * 1000),
+    httpOnly: true
+  });
+  res.status(200).json({ status: 'success' });
 };
 
 

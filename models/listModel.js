@@ -1,10 +1,13 @@
 // task/listModel.js
 const mongoose = require("mongoose");
+const AppError = require("../utils/appError");
 
 const listSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, "A list must have a title"],
+   
+
   },
   category: {
     type: String,
@@ -16,7 +19,7 @@ const listSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now, // Changed to Date.now to store the current timestamp
+    default: Date.now,
   },
   dueDate: { 
     type: Date, 
@@ -37,24 +40,22 @@ const listSchema = new mongoose.Schema({
   }
 });
 
-listSchema.pre("save", async function (next) {
-  console.log(listSchema.user)
-  if (this.isNew) {
-    const existingList = await mongoose.models.List.findOne({
-      title: this.title,
-    });
+// listSchema.pre("save", async function (next) {
+//   if (this.isNew) {
+//     const existingList = await mongoose.models.List.findOne({
+//       title: this.title,
+//       user: this.user
+//     });
+//     console.log(existingList);
 
-    if (existingList) {
-      // console.log("Document Exists");
-
-      const err = new Error("A list with this title already exists.");
-      return next(err);
-    }
-  } else {
-    console.log("Document updated");
-  }
-  next();
-});
+//     if (existingList) {
+//       return next(new AppError("A list with this title already exists.", 400));
+//     }
+//   } else {
+//     console.log("Document updated");
+//   }
+//   next();
+// });
 const List = mongoose.model("List", listSchema);
 
 module.exports = List;
