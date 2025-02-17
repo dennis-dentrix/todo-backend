@@ -1,10 +1,10 @@
+// task/listModel.js
 const mongoose = require("mongoose");
 
 const listSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, "A list must have a title"],
-    unique: true,
   },
   category: {
     type: String,
@@ -16,9 +16,12 @@ const listSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: new Date().toLocaleDateString(), // Fix default value
+    default: Date.now, // Changed to Date.now to store the current timestamp
   },
-  dueDate: { type: Date, default: Date.now },
+  dueDate: { 
+    type: Date, 
+    default: Date.now 
+  },
   remark: {
     type: String,
   },
@@ -27,9 +30,15 @@ const listSchema = new mongoose.Schema({
     enum: ["incomplete", "completed"],
     default: "incomplete",
   },
+  user: { // ADD THIS FIELD
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+    required: [true, 'List must belong to a user']
+  }
 });
 
 listSchema.pre("save", async function (next) {
+  console.log(listSchema.user)
   if (this.isNew) {
     const existingList = await mongoose.models.List.findOne({
       title: this.title,
@@ -46,7 +55,7 @@ listSchema.pre("save", async function (next) {
   }
   next();
 });
-
 const List = mongoose.model("List", listSchema);
 
 module.exports = List;
+
