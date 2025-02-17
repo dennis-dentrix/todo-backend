@@ -14,7 +14,7 @@ const AppError = require("./utils/appError");
 
 const app = express();
 
-// app.set('trust proxy', true);
+app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
@@ -32,6 +32,7 @@ const corsOptions = {
     }
   },
   credentials: true, // Allow cookies, authorization headers, etc.
+  methods: ['GET', 'POST', 'PATCH', 'DELETE']
 };
 
 app.use(cors(corsOptions));
