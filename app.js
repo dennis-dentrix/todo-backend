@@ -14,23 +14,17 @@ const AppError = require("./utils/appError");
 
 const app = express();
 
-// app.set('trust proxy', true);
+app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
-  "https://todolist-web-3j2j.onrender.com", 
+  "https://todo-frontend-react-app.onrender.com",
   // "https://todolist-web-3j2j.onrender.com"
 ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: allowedOrigins,
   credentials: true, // Allow cookies, authorization headers, etc.
   methods: ['GET', 'POST', 'PATCH', 'DELETE']
 };
