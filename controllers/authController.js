@@ -1,3 +1,4 @@
+
 const { promisify } = require("util");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
@@ -19,16 +20,20 @@ const signToken = (id) => {
 const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
 
-  res.cookie('jwt', token, {
+  const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
     secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
-    sameSite: 'None' // Consider 'strict' or 'lax' for better security
-  });
+    sameSite: 'none' // Consider 'strict' or 'lax' for better security
+  };
 
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true; // Ensure secure cookies in production
+  }
 
+  res.cookie('jwt', token, cookieOptions);
   // Remove password from output
   user.password = undefined;
 
@@ -49,14 +54,14 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm,
   });
   // console.log(req.body)
-  createSendToken(newUser, 200,req, res);
+  createSendToken(newUser, 201,req, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return next(new AppError("Please provide email and password!", 401));
+    return next(new AppError("Please provide email and password!", 400));
   }
 
   const user = await User.findOne({ email }).select("+password");
@@ -70,9 +75,16 @@ exports.login = catchAsync(async (req, res, next) => {
 
 // Get Current User
 exports.getCurrentUser = catchAsync(async (req, res, next) => {
-  if (!req.cookies.jwt) {
-    return next(new AppError('You are not logged in!', 401));
-  }
+  // if (!req.cookies.jwt) {
+  //   return next(new AppError('You are not logged in!', 401));
+  // }
+
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt
+}
+else{
+    return next(new AppError("Not logged in", 401))
+}
 
   // Verify token
   const decoded = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
@@ -93,21 +105,31 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
 });
 
 
+// exports.logout = (req, res) => {
+//   res.cookie('jwt', 'loggedout', {
+//     expires: new Date(Date.now() - 10 * 1000),
+//     httpOnly: true
+//   });
+//   res.status(200).json({ status: 'success' });
+// };
+
 exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {
     expires: new Date(Date.now() - 10 * 1000),
-    httpOnly: true
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https', // Ensure secure flag is consistent
+    sameSite: 'None'
   });
   res.status(200).json({ status: 'success' });
 };
 
 
-exports.checkAuthStatus = catchAsync(async(req, res, next) => {
-  res.status(200).json({
-    status: 'success',
-    user: req.user,
-  });
-})
+// exports.checkAuthStatus = catchAsync(async(req, res, next) => {
+//   res.status(200).json({
+//     status: 'success',
+//     user: req.user,
+//   });
+// })
 
 exports.protect = catchAsync(async (req, res, next) => {
   // GET THE TOKEN
@@ -118,6 +140,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
+
 
   // IF NOT LOGGED IN MEANS NO TOKEN, THEREFORE RETURN ERROR
   if (!token) {

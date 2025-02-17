@@ -14,7 +14,7 @@ const AppError = require("./utils/appError");
 
 const app = express();
 
-app.set('trust proxy', true);
+// app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
