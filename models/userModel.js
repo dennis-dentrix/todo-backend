@@ -1,5 +1,4 @@
 const crypto = require("crypto");
-
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
@@ -21,17 +20,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Kindly provide a password"],
     select: false,
-    validate: {
-      validator: function (el) {
-        return el === this.password;
-      },
-      message: "Passwords do not match",
-      min: 8
-    },
+    minlength: 8,
   },
   passwordConfirm: {
     type: String,
     required: [true, "Confirm your password"],
+    validate: {
+      // This only works on CREATE and SAVE!!!
+      validator: function (el) {
+        return el === this.password;
+      },
+      message: "Passwords do not match",
+    },
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -66,12 +66,11 @@ userSchema.methods.createPasswordResetToken = function () {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  // console.log({resetToken}, this.passwordResetToken)
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
   return resetToken;
 };
 
-const user = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
-module.exports = user
+module.exports = User;
