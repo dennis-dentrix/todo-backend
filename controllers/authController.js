@@ -16,7 +16,6 @@ const signToken = (id) => {
   });
 };
 
-
 const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
 
@@ -46,6 +45,7 @@ const createSendToken = (user, statusCode, req, res) => {
   });
 };
 
+// authController.js
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -53,9 +53,40 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
   });
-  // console.log(req.body)
-  createSendToken(newUser, 201,req, res);
+
+  // Generate email verification token and link
+  const verificationToken = newUser.createEmailVerificationToken();
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const emailVerificationUrl = `${baseUrl}/api/v1/users/verifyEmail/${verificationToken}`;
+
+
+  createSendToken(newUser, 201, req, res);
+  
 });
+// authController.js (continue)
+exports.verifyEmail = catchAsync(async (req, res, next) => {
+  const { emailToken } = req.params;
+
+  // Hash the token from the URL
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(emailToken)
+    .digest('hex');
+
+  const user = await User.findOne({ emailToken: hashedToken });
+
+  if (!user) {
+    return next(new AppError('Invalid or expired token.', 400));
+  }
+
+  // Update user's verification status
+  user.isVerified = true;
+  user.emailToken = undefined; // Clear the token after verifying
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({ message: 'Email verified successfully!' });
+});
+
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -65,7 +96,6 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   const user = await User.findOne({ email }).select('+password');
-  console.log(user)
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password. Try again.', 401));
@@ -227,7 +257,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    console.error("Error sending password reset email:", err); // Log the error
+    // console.error("Error sending password reset email:", err);
     return next(new AppError("There was an error sending the email. Please try again later!", 500));
   }
 });
@@ -245,7 +275,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   });
-  // console.log(user);
 
   if (!user)
     return next(new AppError("The token is invalid or does not exist.", 401));
@@ -265,7 +294,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
-  console.log(user)
 
   // 2) Check if POSTed current password is correct
   if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {

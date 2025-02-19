@@ -13,6 +13,8 @@ const userRouter = require("./routes/userRoute");
 const AppError = require("./utils/appError");
 
 const app = express();
+// BODY PARSER
+app.use(express.json({ limit: "10kb" }));
 
 // app.set('trust proxy', true);
 
@@ -38,15 +40,13 @@ app.use(helmet());
 
 // RATE LIMITING(requests per set time limit)
 const rateLimiter = rateLimit({
-  windowMs: 20 * 60 * 1000, // every 20 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+  windowMs: 20 * 60 * 1000, 
+  max: 100, 
   message: "Too many requests. Please try again later",
 });
 
 app.use("/api", rateLimiter);
 
-// BODY PARSER
-app.use(express.json({ limit: "10kb" }));
 
 // DATA SANITIZATION
 app.use(mongoSanitize());
