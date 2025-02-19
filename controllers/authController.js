@@ -1,4 +1,3 @@
-
 const { promisify } = require("util");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
@@ -6,9 +5,8 @@ const jwt = require("jsonwebtoken");
 const AppError = require("../utils/appError");
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
-const { default: sendEmail } = require("../utils/emails");
 const cookieParser = require("cookie-parser");
-// const sendEmail = require("../utils/emails");
+const sendEmailWithToken = require("../utils/sendEmailWithToken");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -56,14 +54,19 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // Generate email verification token and link
   const verificationToken = newUser.createEmailVerificationToken();
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
-  const emailVerificationUrl = `${baseUrl}/api/v1/users/verifyEmail/${verificationToken}`;
+  await newUser.save({ validateBeforeSave: false });
 
+  console.log('Verification Token:', verificationToken); // Debugging log
 
-  createSendToken(newUser, 201, req, res);
-  
+  try {
+    const emailResponse = await sendEmailWithToken(newUser, verificationToken, req, "emailVerification");
+    console.log('Email Response:', emailResponse); // Debugging log
+    res.status(201).json(emailResponse);
+  } catch (err) {
+    console.error('Error sending email:', err); // Debugging log
+    return next(new AppError(err.message, 500));
+  }
 });
-// authController.js (continue)
 exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { emailToken } = req.params;
 
@@ -73,9 +76,12 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
     .update(emailToken)
     .digest('hex');
 
+  console.log('Hashed Token:', hashedToken); // Debugging log
+
   const user = await User.findOne({ emailToken: hashedToken });
 
   if (!user) {
+    console.error('Invalid or expired token'); // Debugging log
     return next(new AppError('Invalid or expired token.', 400));
   }
 
@@ -86,7 +92,6 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ message: 'Email verified successfully!' });
 });
-
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -104,19 +109,12 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, req, res);
 });
 
-
-// Get Current User
 exports.getCurrentUser = catchAsync(async (req, res, next) => {
-  // if (!req.cookies.jwt) {
-  //   return next(new AppError('You are not logged in!', 401));
-  // }
-
   if (req.cookies.jwt) {
-    token = req.cookies.jwt
-}
-else{
-    return next(new AppError("Not logged in", 401))
-}
+    token = req.cookies.jwt;
+  } else {
+    return next(new AppError("Not logged in", 401));
+  }
 
   // Verify token
   const decoded = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
@@ -136,15 +134,6 @@ else{
   });
 });
 
-
-// exports.logout = (req, res) => {
-//   res.cookie('jwt', 'loggedout', {
-//     expires: new Date(Date.now() - 10 * 1000),
-//     httpOnly: true
-//   });
-//   res.status(200).json({ status: 'success' });
-// };
-
 exports.logout = (req, res) => {
   res.cookie('jwt', 'loggedout', {
     expires: new Date(Date.now() - 10 * 1000),
@@ -155,14 +144,6 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: 'success' });
 };
 
-
-// exports.checkAuthStatus = catchAsync(async(req, res, next) => {
-//   res.status(200).json({
-//     status: 'success',
-//     user: req.user,
-//   });
-// })
-
 exports.protect = catchAsync(async (req, res, next) => {
   // GET THE TOKEN
   let token;
@@ -172,7 +153,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
-
 
   // IF NOT LOGGED IN MEANS NO TOKEN, THEREFORE RETURN ERROR
   if (!token) {
@@ -186,8 +166,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // CHECK IF USER USER STILL EXIST
   const freshUser = await User.findById(decoded.id);
-  // console.log(freshUser)
-
   if (!freshUser) {
     return next(
       new AppError("The user belongong to this token does not exist.", 401)
@@ -196,7 +174,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // check if password has been changed after log in
   if (freshUser.changedPasswordAt(decoded.iat)) {
-    return next(new AppError("Password has been chnaged. Login again", 401));
+    return next(new AppError("Password has been changed. Login again", 401));
   }
 
   req.user = freshUser;
@@ -228,41 +206,13 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // Save the user document without validation
   await user.save({ validateBeforeSave: false });
 
-  
-  // const baseUrl = `${req.protocol}://${req.get("host")}`;
-  const frontendBaseURL = process.env.FRONTEND_BASE_URL || `${req.protocol}://${req.get("host")}`;
-  const resetUrl = `${frontendBaseURL}/resetpassword/${resetToken}`;
-
-  const message = `
-    <p>You requested a password reset. Click the link below to reset your password:</p>
-    <p><a href="${resetUrl}">${resetUrl}</a></p>
-    <p>If you didn't request this, please ignore this email.</p>
-  `;
-
   try {
-    await sendEmail({
-      email: user.email,
-      name: user.name,
-      subject: "Your Password Reset Token (Valid for 24hours)",
-      message,
-    });
-
-    res.status(200).json({
-      status: "success",
-      message: "A reset token has been sent to your email address. Please check your inbox.",
-    });
+    const emailResponse = await sendEmailWithToken(user, resetToken, req, "passwordReset");
+    res.status(200).json(emailResponse);
   } catch (err) {
-    // Cleanup if email fails to send
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    // console.error("Error sending password reset email:", err);
-    return next(new AppError("There was an error sending the email. Please try again later!", 500));
+    return next(new AppError(err.message, 500));
   }
 });
-
-
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // GET USER BASED ON THE TOKEN
