@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+// import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import { Resend } from "resend";
 
 const resend = new Resend("re_SbKDqhwS_QC1djXMU85FXrBcFm8w7PsHP");
@@ -7,7 +7,7 @@ const resend = new Resend("re_SbKDqhwS_QC1djXMU85FXrBcFm8w7PsHP");
 async function sendEmail(options) {
   try {
     const { data, error } = await resend.emails.send({
-      from: "Task Manager <onboarding@deniskyu.com>",
+      from: "Task Managser <onboarding@deniskyu.com>",
       to: [options.email],
       subject: options.subject,
       html: options.message,

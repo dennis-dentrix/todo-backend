@@ -1,8 +1,9 @@
 const { default: sendEmail } = require("./emails");
 
 const sendEmailWithToken = async (user, token, req, type) => {
-  const frontendBaseURL = process.env.FRONTEND_BASE_URL || `${req.protocol}://${req.get("host")}`;
-  // const frontendBaseURL = `${req.protocol}://${req.get("host")}`;
+  // const frontendBaseURL = process.env.FRONTEND_BASE_URL || `${req.protocol}://${req.get("host")}`;
+  const frontendBaseURL = process.env.FRONTEND_BASE_URL;
+
 
   let url, subject, message;
 
