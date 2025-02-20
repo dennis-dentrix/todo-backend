@@ -8,7 +8,7 @@ const sendEmailWithToken = async (user, token, req, type) => {
   let url, subject, message;
 
   if (type === "passwordReset") {
-    url = `${frontendBaseURL}/resetPassword/${token}`;
+    url = `https://todolist-web-3j2j.onrender.com/resetPassword/${token}`;
     subject = "Your Password Reset Token (Valid for 24 hours)";
     message = `
       <p>You requested a password reset. Click the link below to reset your password:</p>
