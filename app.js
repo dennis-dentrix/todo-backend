@@ -5,7 +5,8 @@ const xss = require("xss-clean");
 const helmet = require("helmet");
 const compression = require("compression");
 const cors = require("cors");
-const cookieParser = require("cookie-parser")
+const cookieParser = require("cookie-parser");
+const path = require('path');
 
 const globalErrorHandler = require("./controllers/errorController");
 const listRouter = require("./routes/listRoutes");
@@ -15,6 +16,8 @@ const AppError = require("./utils/appError");
 const app = express();
 // BODY PARSER
 app.use(express.json({ limit: "10kb" }));
+app.set('view engine', 'ejs'); //  Tell Express to use EJS
+app.set('views', path.join(__dirname, 'views'));
 
 // app.set('trust proxy', true);
 
