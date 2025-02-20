@@ -5,8 +5,7 @@ const xss = require("xss-clean");
 const helmet = require("helmet");
 const compression = require("compression");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const path = require("path");
+const cookieParser = require("cookie-parser")
 
 const globalErrorHandler = require("./controllers/errorController");
 const listRouter = require("./routes/listRoutes");
@@ -14,15 +13,16 @@ const userRouter = require("./routes/userRoute");
 const AppError = require("./utils/appError");
 
 const app = express();
-
 // BODY PARSER
 app.use(express.json({ limit: "10kb" }));
+
+// app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
-  // "https://todolist-web-3j2j.onrender.com", // Production origin
-  "https://todolist-web-3j2j.onrender.com"
+  "https://todolist-web-3j2j.onrender.com",
+  // "https://todolist-web-3j2j.onrender.com"
 ];
 
 const corsOptions = {
@@ -34,7 +34,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-app.use(cookieParser());
+app.use(cookieParser())
+
 app.use(helmet());
 
 // RATE LIMITING(requests per set time limit)
@@ -46,22 +47,16 @@ const rateLimiter = rateLimit({
 
 app.use("/api", rateLimiter);
 
+
 // DATA SANITIZATION
 app.use(mongoSanitize());
 app.use(xss());
 
 app.use(compression());
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, 'client/build')));
-
 app.use("/api/v1/list", listRouter);
 app.use("/api/v1/users", userRouter);
 
-// The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-});
 
 app.use("*", (req, res, next) => {
   return next(

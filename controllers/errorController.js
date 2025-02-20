@@ -1,6 +1,5 @@
 const AppError = require('./../utils/appError');
 
-console.log(process.env.NODE_ENV);
 const handleCastErrorDB = err => {
   const message = `Invalid ${err.path}: ${err.value}.`;
   return new AppError(message, 400);
