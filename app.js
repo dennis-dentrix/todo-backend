@@ -21,7 +21,8 @@ app.use(express.json({ limit: "10kb" }));
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
-  "https://todolist-web-3j2j.onrender.com", // Production origin
+  // "https://todolist-web-3j2j.onrender.com", // Production origin
+  "https://todolist-web-3j2j.onrender.com"
 ];
 
 const corsOptions = {
