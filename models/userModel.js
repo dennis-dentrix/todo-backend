@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const { type } = require("os");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -34,10 +35,20 @@ const userSchema = new mongoose.Schema({
     },
   },
   isVerified: { type: Boolean, default: false }, // New field for email verification
-  emailToken: { type: String }, // New field for storing verification token
+  emailToken: { type: String }, // New field for storing verification toke
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+
+  // EMAIL VERIFICATION TOKEN
+  verifyOtp :{
+    type: String,
+    default: "",
+  },
+  resetOtp :{
+    type: String,
+    default: "",
+  },
 });
 
 // Middleware to hash password before saving

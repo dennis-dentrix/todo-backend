@@ -8,6 +8,7 @@ const catchAsync = require("../utils/catchAsync");
 const cookieParser = require("cookie-parser");
 const sendEmailWithToken = require("../utils/sendEmailWithToken");
 
+
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -69,6 +70,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   //   return next(new AppError(err.message, 500));
   // }
 });
+
 exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { emailToken } = req.params;
 
@@ -209,9 +211,12 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   try {
+    // const emailResponse = await sendEmailWithToken(user, resetToken, req, "passwordReset");
     const emailResponse = await sendEmailWithToken(user, resetToken, req, "passwordReset");
+
     res.status(202).json(emailResponse);
   } catch (err) {
+    console.log( "Forgot pswd err:",err.message);
     return next(new AppError(err.message, 500));
   }
 });
@@ -228,7 +233,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   });
-  console.log("user:", user);
   console.log("hashedToken:", hashedToken);
 
   if (!user)
