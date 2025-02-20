@@ -69,7 +69,7 @@ userSchema.methods.changedPasswordAt = function (JWTtimestamp) {
 };
 
 // Method to create a password reset token
-userSchema.methods.createPasswordResetToken = function () {
+userSchema.methods.createPasswordResetToken = function() {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
   this.passwordResetToken = crypto
@@ -77,7 +77,10 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // Valid for 10 minutes
+  // console.log({ resetToken }, this.passwordResetToken);
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
   return resetToken;
 };
 

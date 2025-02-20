@@ -210,13 +210,14 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   try {
     const emailResponse = await sendEmailWithToken(user, resetToken, req, "passwordReset");
-    res.status(200).json(emailResponse);
+    res.status(202).json(emailResponse);
   } catch (err) {
     return next(new AppError(err.message, 500));
   }
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
+  console.log(req.params.token);
   // GET USER BASED ON THE TOKEN
   const hashedToken = crypto
     .createHash("sha256")
@@ -227,6 +228,8 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
   });
+  console.log("user:", user);
+  console.log("hashedToken:", hashedToken);
 
   if (!user)
     return next(new AppError("The token is invalid or does not exist.", 401));
