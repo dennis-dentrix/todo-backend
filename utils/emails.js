@@ -22,8 +22,8 @@ async function sendEmail  (options) {
 
 
     // Define sender
-    // const sentFrom = new Sender(process.env.EMAIL_SENDER, "Task Manager");
-    const sentFrom = new Sender('MS_AJhhHv@deniskyu.com', "Task Manager");
+    const sentFrom = new Sender(process.env.EMAIL_SENDER, "Task Manager");
+    // const sentFrom = new Sender('MS_AJhhHv@deniskyu.com', "Task Manager");
 
 
     // Define recipient(s)

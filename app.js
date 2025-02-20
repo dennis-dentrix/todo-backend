@@ -16,8 +16,6 @@ const AppError = require("./utils/appError");
 const app = express();
 // BODY PARSER
 app.use(express.json({ limit: "10kb" }));
-app.set('view engine', 'ejs');
-// app.set('views', path.join(__dirname, 'views'));
 
 app.set('trust proxy', true);
 
