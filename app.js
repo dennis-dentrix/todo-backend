@@ -5,8 +5,7 @@ const xss = require("xss-clean");
 const helmet = require("helmet");
 const compression = require("compression");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const path = require('path');
+const cookieParser = require("cookie-parser")
 
 const globalErrorHandler = require("./controllers/errorController");
 const listRouter = require("./routes/listRoutes");
@@ -15,14 +14,16 @@ const AppError = require("./utils/appError");
 
 const app = express();
 // BODY PARSER
+
 app.use(express.json({ limit: "10kb" }));
 
-app.set('trust proxy', true);
+// app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
   "https://todolist-web-3j2j.onrender.com",
+  // "https://todolist-web-3j2j.onrender.com"
 ];
 
 const corsOptions = {
@@ -56,7 +57,6 @@ app.use(compression());
 
 app.use("/api/v1/list", listRouter);
 app.use("/api/v1/users", userRouter);
-
 
 app.use("*", (req, res, next) => {
   return next(
