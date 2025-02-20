@@ -57,18 +57,18 @@ exports.signup = catchAsync(async (req, res, next) => {
   const verificationToken = newUser.createEmailVerificationToken();
   await newUser.save({ validateBeforeSave: false });
 
-  createSendToken(newUser, 201, req, res);
+  // createSendToken(newUser, 201, req, res);
 
-  // console.log('Verification Token:', verificationToken); 
+  console.log('Verification Token:', verificationToken); 
 
-  // try {
-  //   const emailResponse = await sendEmailWithToken(newUser, verificationToken, req, "emailVerification");
-  //   console.log('Email Response:', emailResponse); 
-  //   res.status(201).json(emailResponse);
-  // } catch (err) {
-  //   console.error('Error sending email:', err);
-  //   return next(new AppError(err.message, 500));
-  // }
+  try {
+    const emailResponse = await sendEmailWithToken(newUser, verificationToken, req, "emailVerification");
+    console.log('Email Response:', emailResponse); 
+    res.status(201).json(emailResponse);
+  } catch (err) {
+    console.error('Error sending email:', err);
+    return next(new AppError(err.message, 500));
+  }
 });
 
 exports.verifyEmail = catchAsync(async (req, res, next) => {

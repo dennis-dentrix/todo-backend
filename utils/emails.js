@@ -7,7 +7,7 @@ const resend = new Resend("re_SbKDqhwS_QC1djXMU85FXrBcFm8w7PsHP");
 async function sendEmail(options) {
   try {
     const { data, error } = await resend.emails.send({
-      from: "Task Manageer <onboarding@deniskyu.com>",
+      from: "Task Manager <onboarding@deniskyu.com>",
       to: [options.email],
       subject: options.subject,
       html: options.message,

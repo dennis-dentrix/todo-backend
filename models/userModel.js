@@ -40,15 +40,6 @@ const userSchema = new mongoose.Schema({
   passwordResetToken: String,
   passwordResetExpires: Date,
 
-  // EMAIL VERIFICATION TOKEN
-  verifyOtp :{
-    type: String,
-    default: "",
-  },
-  resetOtp :{
-    type: String,
-    default: "",
-  },
 });
 
 // Middleware to hash password before saving
