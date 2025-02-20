@@ -2,7 +2,7 @@ import "dotenv/config";
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend("re_SbKDqhwS_QC1djXMU85FXrBcFm8w7PsHP");
 
 async function sendEmail(options) {
   try {
