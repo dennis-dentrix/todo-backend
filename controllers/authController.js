@@ -206,6 +206,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // Set token expiration time (e.g., 10 minutes from now)
   user.passwordResetToken = hashedToken;
   user.passwordResetExpires = Date.now() + 24 * 60 * 1000; // 10 minutes
+  console.log(hashedToken)
 
   // Save the user document without validation
   await user.save({ validateBeforeSave: false });
@@ -222,12 +223,14 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
-  console.log(req.params.token);
   // GET USER BASED ON THE TOKEN
   const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)
     .digest("hex");
+
+  console.log(hashedToken)
+
 
   const user = await User.findOne({
     passwordResetToken: hashedToken,
