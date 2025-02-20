@@ -5,7 +5,8 @@ const xss = require("xss-clean");
 const helmet = require("helmet");
 const compression = require("compression");
 const cors = require("cors");
-const cookieParser = require("cookie-parser")
+const cookieParser = require("cookie-parser");
+const path = require('path');
 
 const globalErrorHandler = require("./controllers/errorController");
 const listRouter = require("./routes/listRoutes");
@@ -53,7 +54,13 @@ app.use("/api", rateLimiter);
 app.use(mongoSanitize());
 app.use(xss());
 
-app.use(compression());
+// app.use(compression());
+
+app.use(express.static(path.join(__dirname, 'dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 app.use("/api/v1/list", listRouter);
 app.use("/api/v1/users", userRouter);
