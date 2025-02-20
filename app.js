@@ -19,13 +19,12 @@ app.use(express.json({ limit: "10kb" }));
 app.set('view engine', 'ejs');
 // app.set('views', path.join(__dirname, 'views'));
 
-// app.set('trust proxy', true);
+app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
   "http://localhost:5173", // Development origin
   "https://todolist-web-3j2j.onrender.com",
-  // "https://todolist-web-3j2j.onrender.com"
 ];
 
 const corsOptions = {
