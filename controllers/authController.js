@@ -59,7 +59,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // createSendToken(newUser, 201, req, res);
 
-  console.log('Verification Token:', verificationToken); 
+  // console.log('Verification Token:', verificationToken); 
 
   try {
     const emailResponse = await sendEmailWithToken(newUser, verificationToken, req, "emailVerification");

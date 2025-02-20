@@ -17,7 +17,7 @@ const app = express();
 
 app.use(express.json({ limit: "10kb" }));
 
-// app.set('trust proxy', true);
+app.set('trust proxy', true);
 
 // Define allowed origins based on environment
 const allowedOrigins = [
