@@ -67,6 +67,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     res.status(201).json({
       status: 'success',
       message: 'Signup successful! Please check your email for the verification OTP.',
+      userId: newUser._id // Include the newUser ID in the response
     });
   } catch (err) {
     console.error('Error sending email:', err);
@@ -76,16 +77,17 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 // Email Verification Controller - Updated for OTP
 exports.verifyEmail = catchAsync(async (req, res, next) => {
-  console.log('Request body:', req.body);
-  const { otp } = req.body; // Get the OTP from request body
+  const { otp,  } = req.body; 
+  const { userId } = req.params;
 
-  if (!otp) {
-    return next(new AppError("Please provide the OTP.", 400));
+  if (!otp || !userId) {
+    return next(new AppError("Please provide the OTP and user ID.", 400));
   }
 
   const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex'); // Hash the provided OTP
 
   const user = await User.findOne({
+    _id: userId,
     emailToken: hashedOTP,
     passwordResetOTPExpires: { $gt: Date.now() }, // Check if the OTP has not expired
   });

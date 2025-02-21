@@ -6,7 +6,7 @@ const userController = require("../controllers/userControler");
 
 // Remove emailToken from URL and change to POST
 router.post("/signup", authController.signup);
-router.post("/verifyEmail", authController.verifyEmail); // Changed to POST
+router.post("/verifyEmail/:userId", authController.verifyEmail); // Changed to POST
 router.post("/login", authController.login);
 router.get("/logout", authController.logout);
 router.post("/forgotPassword", authController.forgotPassword);
