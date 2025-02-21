@@ -63,7 +63,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   try {
     const emailResponse = await sendEmailWithOTP(newUser, otp); // Send plain OTP to user's email
-    console.log('Email Response:', emailResponse);
+    // console.log('Email Response:', emailResponse);
     res.status(201).json({
       status: 'success',
       message: 'Signup successful! Please check your email for the verification OTP.',
@@ -151,7 +151,7 @@ exports.logout = (req, res) => {
     expires: new Date(Date.now() - 10 * 1000),
     httpOnly: true,
     secure: req.secure || req.headers['x-forwarded-proto'] === 'https', // Ensure secure flag is consistent
-    sameSite: 'None'
+    sameSite: 'none'
   });
   res.status(200).json({ status: 'success' });
 };
