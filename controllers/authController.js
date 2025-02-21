@@ -6,7 +6,7 @@ const AppError = require("../utils/appError");
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const cookieParser = require("cookie-parser");
-const sendEmailWithToken = require("../utils/sendEmailWithToken");
+const sendEmailWithOTP = require("../utils/sendEmailWithOtp");
 
 
 const signToken = (id) => {
@@ -44,7 +44,6 @@ const createSendToken = (user, statusCode, req, res) => {
   });
 };
 
-// authController.js
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -53,46 +52,53 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm,
   });
 
-  // Generate email verification token and link
-  const verificationToken = newUser.createEmailVerificationToken();
+  // Generate an OTP for email verification
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generates a six-digit number
+  const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex'); // Hash the OTP
+
+  newUser.emailToken = hashedOTP; // Store hashed OTP in emailToken field
+  newUser.passwordResetOTPExpires = Date.now() + (10 * 60 * 1000); // Set expiration time (10 minutes)
+  
   await newUser.save({ validateBeforeSave: false });
 
-  // createSendToken(newUser, 201, req, res);
-
-  // console.log('Verification Token:', verificationToken); 
-
   try {
-    const emailResponse = await sendEmailWithToken(newUser, verificationToken, req, "emailVerification");
-    console.log('Email Response:', emailResponse); 
-    res.status(201).json(emailResponse);
+    const emailResponse = await sendEmailWithOTP(newUser, otp); // Send plain OTP to user's email
+    console.log('Email Response:', emailResponse);
+    res.status(201).json({
+      status: 'success',
+      message: 'Signup successful! Please check your email for the verification OTP.',
+    });
   } catch (err) {
     console.error('Error sending email:', err);
     return next(new AppError(err.message, 500));
   }
 });
 
+// Email Verification Controller - Updated for OTP
 exports.verifyEmail = catchAsync(async (req, res, next) => {
-  const { emailToken } = req.params;
+  console.log('Request body:', req.body);
+  const { otp } = req.body; // Get the OTP from request body
 
-  // Hash the token from the URL
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(emailToken)
-    .digest('hex');
+  if (!otp) {
+    return next(new AppError("Please provide the OTP.", 400));
+  }
 
-  console.log('Hashed Token:', hashedToken); // Debugging log
+  const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex'); // Hash the provided OTP
 
-  const user = await User.findOne({ emailToken: hashedToken });
+  const user = await User.findOne({
+    emailToken: hashedOTP,
+    passwordResetOTPExpires: { $gt: Date.now() }, // Check if the OTP has not expired
+  });
 
   if (!user) {
-    console.error('Invalid or expired token'); // Debugging log
-    return next(new AppError('Invalid or expired token.', 400));
+    return next(new AppError("Invalid or expired OTP.", 401));
   }
 
   // Update user's verification status
   user.isVerified = true;
   user.emailToken = undefined; // Clear the token after verifying
-  await user.save({ validateBeforeSave: false });
+  user.passwordResetOTPExpires = undefined; // Clear the expiration time
+  await user.save({validateBeforeSave: false});
 
   res.status(200).json({ message: 'Email verified successfully!' });
 });
@@ -186,72 +192,93 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-  // 1. Check if the email is valid
   const { email } = req.body;
+  
   if (!email) {
-    return next(new AppError("Please provide your email", 400));
+    return next(new AppError("Please provide your email",400));
   }
 
-  // 2. Check if the user exists
   const user = await User.findOne({ email });
 
   if (!user) {
-    return next(new AppError("There is no user with that email address.", 404));
+    return next(new AppError("There is no user with that email address.",404));
   }
 
-  // 3. Generate a random reset token
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  // Generate a random OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generates a six-digit number
 
-  // Set token expiration time (e.g., 10 minutes from now)
-  user.passwordResetToken = hashedToken;
-  user.passwordResetExpires = Date.now() + 24 * 60 * 1000; // 10 minutes
-  console.log("fORGOT HASHED:",hashedToken)
-
-  // Save the user document without validation
+  // Store hashed OTP and expiration time
+  const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
+  
+  user.passwordResetOTP = hashedOTP; // Store hashed OTP
+  user.passwordResetOTPExpires = Date.now() + (10 * 60 * 1000); // Set expiration time (10 minutes)
+  
   await user.save({ validateBeforeSave: false });
 
   try {
-    // const emailResponse = await sendEmailWithToken(user, resetToken, req, "passwordReset");
-    const emailResponse = await sendEmailWithToken(user, resetToken, req, "passwordReset");
-
-    res.status(202).json(emailResponse);
+    const emailResponse = await sendEmailWithOTP(user, otp); // Send plain OTP to user's email
+    res.status(200).json(emailResponse);
   } catch (err) {
-    console.log( "Forgot pswd err:",err.message);
-    return next(new AppError(err.message, 500));
+    return next(new AppError(err.message,500));
   }
 });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {
+// Reset Password Controller
+exports.verifyResetOTP = catchAsync(async (req, res, next) => {
+  const { otp } = req.body;
 
-  // GET USER BASED ON THE TOKEN
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  if (!otp) {
+      return next(new AppError("Please provide the OTP.", 400));
+  }
 
-  console.log("RESET HASHED",hashedToken)
-
+  const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
 
   const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() },
+      passwordResetOTP: hashedOTP,
+      passwordResetOTPExpires: { $gt: Date.now() }, // Check if the OTP has not expired
   });
-console.log("RESET PSWD:",user)
-  if (!user)
-    return next(new AppError("The token is invalid or does not exist.", 401));
-  // SET NEW PASSWORD IF THE TOKEN HAS NOT EXPIRED AND THERE IS A USER
-  user.password = req.body.password;
-  user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetExpires = undefined;
-  user.passwordResetToken = undefined;
 
-  // UPDATE CHANGEDPASSWORDAT PROPERTY
+  if (!user) {
+      return next(new AppError("Invalid or expired OTP.", 401));
+  }
+
+  // If OTP is valid, send a success response
+  res.status(200).json({
+      status: 'success',
+      message: 'OTP is valid. You can now set your new password.',
+      userId: user._id // Optionally send back user ID or any other necessary info
+  });
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  const { password, passwordConfirm } = req.body;
+  const userId = req.params.userId; // Get user ID from request parameters
+
+  if (!password || !passwordConfirm) {
+      return next(new AppError("Please provide both password and password confirmation.", 400));
+  }
+
+  // Fetch the user using the provided userId
+  const user = await User.findById(userId);
+
+  if (!user) {
+      return next(new AppError("User not found.", 404));
+  }
+
+  // Set new password and clear the OTP fields
+  user.password = password;
+  user.passwordConfirm = passwordConfirm;
+
+  // Clear OTP fields after use
+  user.passwordResetOTPExpires = undefined; // Assuming you want to clear this
+  user.passwordResetOTP = undefined; // Assuming you want to clear this as well
+
   await user.save();
 
-  // LOG USER IN, SEND JWT
-  createSendToken(user, 200, req, res);
+  createSendToken(user, 200, req, res); // Log in the user and send JWT
 });
+
+
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection

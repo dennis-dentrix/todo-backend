@@ -17,7 +17,7 @@ async function sendEmail(options) {
       return console.error({ error });
     }
 
-    console.log({data})
+    // console.log({data})
     return { data };
   } catch (error) {
     console.error("Error sending email:", error.body.message, error.stack); // Enhanced error logging

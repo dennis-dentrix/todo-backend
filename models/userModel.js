@@ -27,22 +27,27 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Confirm your password"],
     validate: {
-      // This only works on CREATE and SAVE!!!
       validator: function (el) {
         return el === this.password;
       },
       message: "Passwords do not match",
     },
   },
-  isVerified: { type: Boolean, default: false }, // New field for email verification
-  emailToken: { type: String }, // New field for storing verification toke
+  isVerified: { type: Boolean, default: false },
+  emailToken: { type: String },
   passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
 
+  // New fields for OTP implementation:
+  passwordResetOTP: {
+    type: String,
+    select: false, // Important:  Don't return this in query results by default
+  },
+  passwordResetOTPExpires: {
+    type: Date,
+    select: false, // Important:  Don't return this in query results by default
+  },
 });
 
-// Middleware to hash password before saving
 userSchema.pre("save", async function (next) {
   try {
     if (!this.isModified("password")) return next();
@@ -56,43 +61,16 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-// Method to compare passwords
 userSchema.methods.correctPassword = async function (candidatePSWD, userPSWD) {
   return await bcrypt.compare(candidatePSWD, userPSWD);
 };
 
-// Method to check if password has changed
 userSchema.methods.changedPasswordAt = function (JWTtimestamp) {
   if (this.passwordChangedAt) {
     const changedTimeStamp = this.passwordChangedAt.getTime() / 1000;
     return JWTtimestamp < changedTimeStamp;
   }
   return false;
-};
-
-// Method to create a password reset token
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
-  // console.log({ resetToken }, this.passwordResetToken);
-
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-
-  return resetToken;
-};
-
-// Method to generate email verification token
-userSchema.methods.createEmailVerificationToken = function () {
-  const emailToken = crypto.randomBytes(32).toString('hex');
-  
-  this.emailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
-  
-  return emailToken; 
 };
 
 const User = mongoose.model("User", userSchema);
